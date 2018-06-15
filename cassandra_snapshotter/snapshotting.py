@@ -534,7 +534,7 @@ class SnapshotCollection(object):
             return
         o = urlparse(self.s3_connection_host)
         if o.hostname:
-            conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=o.hostname, port=o.port, calling_format = OrdinaryCallingFormat(), is_secure=self.is_secure)
+            conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=o.hostname, port=o.port, calling_format=OrdinaryCallingFormat(), is_secure=self.is_secure)
         else:
             conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=self.s3_connection_host, is_secure=self.is_secure)
         bucket = conn.get_bucket(self.s3_bucket, validate=False)
