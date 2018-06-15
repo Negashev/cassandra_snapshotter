@@ -9,6 +9,7 @@ RUN pip install .
 
 FROM python:2-alpine
 RUN apk add --update libffi-dev
+RUN apk add --update openssl-dev
 RUN apk add --update lzo
 ENTRYPOINT ["cassandra-snapshotter"]
 COPY --from=build /usr/local/lib/python2.7/site-packages /usr/local/lib/python2.7/site-packages

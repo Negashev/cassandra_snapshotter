@@ -53,6 +53,11 @@ def add_s3_arguments(arg_parser):
                             default=None,
                             help="S3 endpoint address")
 
+    arg_parser.add_argument('--s3-no-secure',
+                            action='store_false',
+                            default=True,
+                            help="S3 secure connection")
+
     arg_parser.add_argument('--s3-ssenc',
                             action='store_true',
                             help="Enable AWS S3 server-side encryption")

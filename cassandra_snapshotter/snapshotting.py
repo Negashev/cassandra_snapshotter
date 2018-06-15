@@ -9,7 +9,9 @@ import json
 import shutil
 import logging
 from distutils.util import strtobool
-from boto.s3.connection import S3Connection
+from urlparse import urlparse
+
+from boto.s3.connection import S3Connection, OrdinaryCallingFormat
 from boto.s3.key import Key
 from boto.exception import S3ResponseError
 from datetime import datetime
@@ -95,12 +97,14 @@ class Snapshot(object):
 
 
 class RestoreWorker(object):
-    def __init__(self, aws_access_key_id, aws_secret_access_key, snapshot, cassandra_bin_dir, cassandra_data_dir):
+    def __init__(self, aws_access_key_id, aws_secret_access_key, snapshot, cassandra_bin_dir, cassandra_data_dir, is_secure):
         self.aws_secret_access_key = aws_secret_access_key
         self.aws_access_key_id = aws_access_key_id
+        self.is_secure = is_secure
         self.s3connection = S3Connection(
             aws_access_key_id=self.aws_access_key_id,
-            aws_secret_access_key=self.aws_secret_access_key)
+            aws_secret_access_key=self.aws_secret_access_key,
+            is_secure=self.is_secure)
         self.snapshot = snapshot
         self.keyspace_table_matcher = None
         self.cassandra_bin_dir = cassandra_bin_dir
@@ -250,7 +254,7 @@ class BackupWorker(object):
 
     def __init__(self, aws_secret_access_key,
                  aws_access_key_id, s3_bucket_region, s3_ssenc,
-                 s3_connection_host, cassandra_conf_path, use_sudo,
+                 s3_connection_host, is_secure, cassandra_conf_path, use_sudo,
                  nodetool_path, cassandra_bin_dir, cqlsh_user, cqlsh_password,
                  backup_schema, buffer_size, exclude_tables, rate_limit, quiet,
                  connection_pool_size=12, reduced_redundancy=False):
@@ -259,6 +263,7 @@ class BackupWorker(object):
         self.s3_bucket_region = s3_bucket_region
         self.s3_ssenc = s3_ssenc
         self.s3_connection_host = s3_connection_host
+        self.is_secure = is_secure
         self.cassandra_conf_path = cassandra_conf_path
         self.nodetool_path = nodetool_path or "{!s}/nodetool".format(cassandra_bin_dir)
         self.cqlsh_path = "{!s}/cqlsh".format(cassandra_bin_dir)
@@ -515,8 +520,9 @@ class BackupWorker(object):
 class SnapshotCollection(object):
     def __init__(
             self, aws_access_key_id,
-            aws_secret_access_key, base_path, s3_bucket, s3_connection_host):
+            aws_secret_access_key, base_path, s3_bucket, s3_connection_host, is_secure):
         self.s3_connection_host = s3_connection_host
+        self.is_secure = is_secure
         self.s3_bucket = s3_bucket
         self.base_path = base_path
         self.snapshots = None
@@ -526,8 +532,11 @@ class SnapshotCollection(object):
     def _read_s3(self):
         if self.snapshots:
             return
-
-        conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=self.s3_connection_host)
+        o = urlparse(self.s3_connection_host)
+        if o.hostname:
+            conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=o.hostname, port=o.port, calling_format = OrdinaryCallingFormat(), is_secure=self.is_secure)
+        else:
+            conn = S3Connection(self.aws_access_key_id, self.aws_secret_access_key, host=self.s3_connection_host, is_secure=self.is_secure)
         bucket = conn.get_bucket(self.s3_bucket, validate=False)
         self.snapshots = []
         prefix = self.base_path

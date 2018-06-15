@@ -38,7 +38,8 @@ def run_backup(args):
             args.aws_secret_access_key,
             args.s3_base_path,
             args.s3_bucket_name,
-            args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region)
+            args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region),
+            args.s3_no_secure
         ).get_snapshot_for(
             hosts=env.hosts,
             keyspaces=env.keyspaces,
@@ -52,6 +53,7 @@ def run_backup(args):
         s3_bucket_region=args.s3_bucket_region,
         s3_ssenc=args.s3_ssenc,
         s3_connection_host=args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region),
+        is_secure=args.s3_no_secure,
         cassandra_conf_path=args.cassandra_conf_path,
         nodetool_path=args.nodetool_path,
         cassandra_bin_dir=args.cassandra_bin_dir,
@@ -89,7 +91,8 @@ def list_backups(args):
         args.aws_secret_access_key,
         args.s3_base_path,
         args.s3_bucket_name,
-        args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region)
+        args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region),
+        args.s3_no_secure
     )
     path_snapshots = defaultdict(list)
 
@@ -111,7 +114,8 @@ def restore_backup(args):
         args.aws_secret_access_key,
         args.s3_base_path,
         args.s3_bucket_name,
-        args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region)
+        args.s3_endpoint or get_s3_connection_host(args.s3_bucket_region),
+        args.s3_no_secure
     )
 
     if args.snapshot_name == 'LATEST':
@@ -121,6 +125,7 @@ def restore_backup(args):
 
     worker = RestoreWorker(aws_access_key_id=args.aws_access_key_id,
                            aws_secret_access_key=args.aws_secret_access_key,
+                           is_secure=args.s3_no_secure,
                            snapshot=snapshot,
                            cassandra_bin_dir=args.cassandra_bin_dir,
                            cassandra_data_dir=args.cassandra_data_dir)
