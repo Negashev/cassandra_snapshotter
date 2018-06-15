@@ -49,6 +49,10 @@ def add_s3_arguments(arg_parser):
                             default='us-east-1',
                             help="S3 bucket region (default us-east-1)")
 
+    arg_parser.add_argument('--s3-endpoint',
+                            default=None,
+                            help="S3 endpoint address")
+
     arg_parser.add_argument('--s3-ssenc',
                             action='store_true',
                             help="Enable AWS S3 server-side encryption")
